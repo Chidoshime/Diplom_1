@@ -1,110 +1,79 @@
+import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.Spy;
-import org.apache.commons.lang3.StringUtils;
+import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 import praktikum.Bun;
 import praktikum.Burger;
 import praktikum.Ingredient;
 import praktikum.IngredientType;
+
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotEquals;
 
 @RunWith(MockitoJUnitRunner.class)
+
 public class BurgerTest {
-
-    @Spy
+    @Mock
+    Bun bun;
     Burger burger;
+    Ingredient firstIngredient = Mockito.mock(Ingredient.class);
+    Ingredient secondIngredient = Mockito.mock(Ingredient.class);
 
-    private Bun bun;
-    private Ingredient ingredient;
+    @Mock
+    private Ingredient ingredientSause;
+
+    @Before
+    public void setUp(){
+        this.burger= new Burger();}
+
 
     @Test
-    public void burgerGetRecipeReturnsBuns(){
-        bun = new Bun("LongLoaf", 2);
-        burger.setBuns(bun);
+    public void checkSetBuns(){
+        this.burger.setBuns(this.bun);
+        Mockito.when(this.bun.getName()).thenReturn("black bun");
+        String actual = this.bun.getName();
+        assertEquals("Возвращается неверное имя булочки","black bun",actual);}
 
-        assertEquals("Булка не нашлась!",2, StringUtils.countMatches(burger.getReceipt(), bun.getName()));
+    @Test
+    public void addIngredientTest(){
+        this.burger.addIngredient(this.firstIngredient);
+        assertEquals("Неверное количество ингридиентов в бургере",1,this.burger.ingredients.size());
+    }
+    @Test
+    public void RemoveIngredientTest(){
+        this.burger.addIngredient(this.firstIngredient);
+        this.burger.removeIngredient(0);
+        Assert.assertTrue("Ингридиент не удален", this.burger.ingredients.isEmpty());
+    }
+    @Test
+    public void moveIngredientTest(){
+        this.burger.addIngredient(this.firstIngredient);
+        this.burger.addIngredient(this.secondIngredient);
+        this.burger.moveIngredient(0,1);
+        assertEquals("Ингридиенты не поменялись местами", "secondIngredient",this.burger.ingredients.get(0).toString());
+    }
+    @Test
+    public void getReceipt(){
+        Bun bun = new Bun("Bun", 120.0F);
+        Ingredient sauce=new Ingredient(IngredientType.SAUCE,"Red",50);
+        Ingredient filling= new Ingredient(IngredientType.FILLING,"cutlet",10);
+        Burger burger = new Burger();
+        burger.setBuns(bun);
+        burger.addIngredient(sauce);
+        burger.addIngredient(filling);
+        String expectedString = "(==== Bun ====)\r\n= sauce Red =\r\n= filling cutlet =\r\n(==== Bun ====)\r\n\r\nPrice: 300,000000\r\n";
+        String actualReceipt = burger.getReceipt();
+        assertEquals("Ошибка",expectedString,actualReceipt);
     }
 
     @Test
-    public void burgerGetRecipeReturnsIngredient(){
-        bun = new Bun("LongLoaf", 2);
-        ingredient = new Ingredient(IngredientType.SAUCE, "Catchup", 1);
-
+    public void getPriceTest() {
         burger.setBuns(bun);
-        burger.addIngredient(ingredient);
-
-        assertEquals("Ингредиент не нашелся!",1, StringUtils.countMatches(burger.getReceipt(), ingredient.getName()));
-    }
-
-    @Test
-    public void burgerGetRecipeReturnsPrice(){
-        bun = new Bun("LongLoaf", 2);
-        ingredient = new Ingredient(IngredientType.SAUCE, "Catchup", 1);
-
-        burger.setBuns(bun);
-        burger.addIngredient(ingredient);
-
-        assertEquals("Цена булок посчиталась неверно!",1, StringUtils.countMatches(burger.getReceipt(), "5"));
-    }
-
-    @Test
-    public void burgerGetPriceReturnsPrice(){
-        bun = new Bun("LongLoaf", 2);
-        ingredient = new Ingredient(IngredientType.FILLING, "SpaceCucumber", 1);
-
-        burger.setBuns(bun);
-        burger.addIngredient(ingredient);
-
-        assertEquals("Цена посчиталась неправильно", 5, burger.getPrice(), 0);
-    }
-
-    @Test
-    public void burgerRemoveIngredientRemovesIngredient(){
-        bun = new Bun("LongLoaf", 2);
-        ingredient = new Ingredient(IngredientType.SAUCE, "Catchup", 1);
-
-        burger.setBuns(bun);
-        burger.addIngredient(ingredient);
-        burger.addIngredient(ingredient);
-        burger.removeIngredient(1);
-
-        assertEquals("Ингредиент не нашелся!",1, StringUtils.countMatches(burger.getReceipt(), ingredient.getName()));
-    }
-
-    @Test
-    public void burgerMoveIngredientMovesIngredient(){
-        bun = new Bun("LongLoaf", 2);
-        ingredient = new Ingredient(IngredientType.SAUCE, "Catchup", 1);
-        Ingredient ingredient2 = new Ingredient(IngredientType.SAUCE, "Mayonnaise", 1);
-
-        burger.setBuns(bun);
-        burger.addIngredient(ingredient);
-        burger.addIngredient(ingredient2);
-
-        String oldRecipe = burger.getReceipt();
-        burger.moveIngredient(0,1);
-
-        assertNotEquals("Рецепты одинаковы, ингредиент не переместился", oldRecipe, burger.getReceipt());
-    }
-
-    @Test
-    public void burgerReceiptFormatCheck(){
-        bun = new Bun("LongLoaf", 2);
-        ingredient = new Ingredient(IngredientType.SAUCE, "Catchup", 1);
-        Ingredient ingredient2 = new Ingredient(IngredientType.SAUCE, "Mayonnaise", 1);
-
-        StringBuilder receipt = new StringBuilder(String.format("(==== %s ====)%n", bun.getName()));
-        receipt.append(String.format("= %s %s =%n", ingredient.getType().toString().toLowerCase(), ingredient.getName()));
-        receipt.append(String.format("= %s %s =%n", ingredient2.getType().toString().toLowerCase(), ingredient2.getName()));
-        receipt.append(String.format("(==== %s ====)%n", bun.getName()));
-        receipt.append(String.format("%nPrice: %f%n", bun.getPrice()*2+ingredient.getPrice()+ ingredient2.getPrice()));
-
-        burger.setBuns(bun);
-        burger.addIngredient(ingredient);
-        burger.addIngredient(ingredient2);
-
-        assertEquals("Рецепт составлен неправильно", receipt.toString(), burger.getReceipt());
+        burger.addIngredient(ingredientSause);
+        float expectedPrice = bun.getPrice() * 2 + ingredientSause.getPrice();
+        float actualPrice = burger.getPrice();
+        assertEquals("Ошибка при подсчете цены бургера", expectedPrice, actualPrice, 0.01f);
     }
 }
